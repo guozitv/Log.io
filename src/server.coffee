@@ -124,9 +124,17 @@ class LogServer extends events.EventEmitter
 
   _addNode: (nname, snames='') ->
     @__add nname, snames, @logNodes, LogNode, 'node'
+    for sname in snames.split ','
+        winston.loggers.add "#{nname}.#{sname}", {console: {level:'debug'}, file: {filename:"#{nname}.#{sname}", level:'debug'}}
+        if winston.loggers.get "#{nname}.#{sname}"? 
+            @_log.debug "addnode log file: #{nname}.#{sname}"
+
 
   _addStream: (sname, nnames='') ->
     @__add sname, nnames, @logStreams, LogStream, 'stream'
+    for name in nnames.split ','
+        winston.loggers.add "#{nname}.#{sname}", {console: {level:'debug'}, file: {filename:"#{nname}.#{sname}", level:'debug'}}
+        @_log.debug "addstream log file: #{nname}.#{sname}"
 
   _removeNode: (nname) ->
     @__remove nname, @logNodes, 'node'
@@ -137,6 +145,7 @@ class LogServer extends events.EventEmitter
   _newLog: (sname, nname, logLevel, message...) ->
     message = message.join '|'
     @_log.debug "Log message: (#{sname}, #{nname}, #{logLevel}) #{message}"
+    winston.loggers.get("#{nname}.#{sname}").info("#{message}")
     node = @logNodes[nname] or @_addNode nname, sname
     stream = @logStreams[sname] or @_addStream sname, nname
     @emit 'new_log', stream, node, logLevel, message
